@@ -36,7 +36,8 @@ enum
     ENCENDER,
     TEPMPORIZADOR,
     TEMPERATURA,
-    TIPO_SENSOR
+    TIPO_SENSOR,
+    TRANSMISION
 };
 
 // tipo de sensor utilizado, descomente el que desee utilizar
@@ -69,6 +70,7 @@ int tipoSensor = MAX6675_SENSOR;
 bool flvapor = false;
 bool flvalid = false;
 bool flimprimir = false;
+bool flTransmision = false;
 
 // variable para el control de los menus
 int menu = 0;
@@ -115,7 +117,7 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(STEAM_PIN, LOW); // desactiva los canales
     digitalWrite(LASER_PIN, LOW);
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LED_BUILTIN, LOW);
 
     // inicializacion del serial
     Serial.begin(115200);
@@ -123,8 +125,8 @@ void setup()
     // reserve 200 bytes for the inputString:
     contmin = contminSet;
 
-    sedSerialData();
-    delay(1000);
+    // sedSerialData();
+    delay(200);
 }
 
 /** ****************************************************************************
@@ -173,7 +175,10 @@ void loop()
         }
 
         // inprime valores por serial
-        sedSerialData();
+        if (flTransmision)
+        {
+            sedSerialData();
+        }
         contmsant = millis();
     }
 
@@ -252,6 +257,19 @@ void loop()
         command = NONE_MENU;
         break;
 
+    case TRANSMISION:
+        /* verifica si se puede transmitir o no */
+        if (value == 1)
+        {
+            flTransmision = true;
+        }
+        else
+        {
+            flTransmision = false;
+        }
+        command = NONE_MENU;
+        break;
+
     default:
         break;
     }
@@ -267,7 +285,7 @@ void sedSerialData(void)
                         String(contsec) + ',' + String(tipoSensor) + ';';
 
     // envia cadena de datos por serial
-    Serial.println(dataToSend);
+    Serial.print(dataToSend);
 }
 
 /** ****************************************************************************
