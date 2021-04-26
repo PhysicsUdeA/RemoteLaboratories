@@ -24,9 +24,9 @@ object Frm_About: TFrm_About
   object Label2: TLabel
     Left = 368
     Top = 173
-    Width = 59
+    Width = 66
     Height = 13
-    Caption = 'Designed by'
+    Caption = 'Dise'#241'ado por:'
   end
   object Label3: TLabel
     Left = 328
@@ -50,7 +50,7 @@ object Frm_About: TFrm_About
     Caption = '__________________________________________________'
   end
   object Label6: TLabel
-    Left = 216
+    Left = 172
     Top = 16
     Width = 281
     Height = 25
@@ -1118,7 +1118,7 @@ object Frm_About: TFrm_About
     Height = 57
     AutoSize = False
     Caption = 
-      'Herramienta computacional para el manejo de la maquina generador' +
+      'Herramienta computacional para el manejo de la m'#225'quina generador' +
       'a de vapor y otros instrumentos que puedan ser encendidos o apag' +
       'ados directamente desde la red el'#233'ctrica.'
     Font.Charset = DEFAULT_CHARSET
