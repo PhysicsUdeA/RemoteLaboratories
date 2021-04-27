@@ -169,7 +169,7 @@ begin
     ComPort.WriteStr(str);
     Label1.Caption := str;
   end
-  else if (steamState = 1) then
+  else if (laserState = 1) then
   begin
     str := '1,002;';
     ComPort.WriteStr(str);
@@ -300,8 +300,18 @@ begin
 
   if ComPort.Connected then
   begin
-    ComPort.WriteStr('6,000;');
-    ComPort.Close;
+    try
+      ComPort.WriteStr('1,001;');
+      Sleep(50);
+      ComPort.WriteStr('1,002;');
+      Sleep(50);
+      ComPort.WriteStr('6,000;');
+      Sleep(50);
+      ComPort.Close;
+    finally
+
+    end;
+
   end;
 end;
 
