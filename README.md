@@ -4,3 +4,7 @@ This repository is create to share the information about the building of some re
 Author: Fabian Castaño
 
 <img src="LogoUdeA.png">
+
+### Delphi comport installation
+
+https://github.com/CWBudde/ComPort-Library
