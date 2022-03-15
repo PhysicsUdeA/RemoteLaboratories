@@ -5,6 +5,10 @@ Author: Fabian Castaño
 
 <img src="LogoUdeA.png">
 
+### Considerations
+
+- Review the decimal point configuration in PC, it needs to be a dot
+
 ### Delphi comport installation
 
 https://github.com/CWBudde/ComPort-Library
