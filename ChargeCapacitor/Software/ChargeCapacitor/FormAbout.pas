@@ -21,6 +21,7 @@ type
     Label7: TLabel;
     Label8: TLabel;
     Label10: TLabel;
+    Label11: TLabel;
     procedure Button1Click(Sender: TObject);
 
   private

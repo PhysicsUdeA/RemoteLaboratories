@@ -5,7 +5,8 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, CPort, CPortCtl, Menus, StrUtils, VclTee.TeeGDIPlus,
-  VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs, VCLTee.Chart;
+  VclTee.TeEngine, VclTee.Series, VclTee.TeeProcs, VclTee.Chart,
+  Vcl.Imaging.pngimage;
 
 type
   TForm1 = class(TForm)
@@ -15,29 +16,37 @@ type
     Serial1: TMenuItem;
     ButConecct: TButton;
     Memo1: TMemo;
-    ButFreq: TButton;
-    Label1: TLabel;
     GroupBox1: TGroupBox;
     Acercade1: TMenuItem;
     Acercade2: TMenuItem;
     Label6: TLabel;
-    EditFreq: TEdit;
     ButGener: TButton;
     Chart1: TChart;
     Series1: TFastLineSeries;
     Timer1: TTimer;
+    ComboCapacitor: TComboBox;
+    Label2: TLabel;
+    Label3: TLabel;
+    ComboPeriod: TComboBox;
+    Label4: TLabel;
+    ComboSample: TComboBox;
+    ButtonSave: TButton;
+    ButPause: TButton;
+    GroupBox2: TGroupBox;
+    Image1: TImage;
     procedure ComPortOpen(Sender: TObject);
     procedure ComPortClose(Sender: TObject);
     procedure ComPortRxChar(Sender: TObject; Count: Integer);
     procedure Serial1Click(Sender: TObject);
     procedure ButConecctClick(Sender: TObject);
     procedure FormOnClose(Sender: TObject; var Action: TCloseAction);
-    procedure ButFreqClick(Sender: TObject);
     procedure Acercade2Click(Sender: TObject);
     procedure ButGenerClick(Sender: TObject);
-    procedure EditFreqKeyPress(Sender: TObject; var Key: Char);
     procedure FormCreate(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
+    procedure ButtonSaveClick(Sender: TObject);
+    procedure ButPauseClick(Sender: TObject);
+    procedure ClearComPortInputBuffer(Port: TComPort);
   private
     { Private declarations }
   public
@@ -50,8 +59,11 @@ var
   dataRead: String;
   freqState: Integer;
 
-  value: Array[0..100] of Double;
-  time: Double;
+  value, time: Array [0 .. 100] of Double;
+
+  Capacitors: Array [0 .. 2] of String;
+  Periods: Array [0 .. 8] of String;
+  Samples: Array [0 .. 5] of String;
 
 implementation
 
@@ -72,17 +84,17 @@ begin
   try
     if (ComPort.Connected) then
     begin
-      str := '1,0;';
+      str := '0,8000,50;';
       ComPort.WriteStr(str);
-      Sleep(2000);
+      Sleep(1500);
       ComPort.Close;
 
     end
     else
     begin
-      str := '1,0;';
+      str := '0,8000,50;';
       ComPort.Open;
-      Sleep(2000);
+      Sleep(1500);
       ComPort.WriteStr(str);
 
     end;
@@ -96,49 +108,102 @@ begin
 
 end;
 
-procedure TForm1.ButFreqClick(Sender: TObject);
-var
-  editText, str: String;
-begin
-
-  editText := EditFreq.Text;
-  if (editText = '') then
-    editText := '0';
-
-  str := '3,' + editText + ';';
-  Label1.Caption := str;
-  ComPort.WriteStr(str);
-
-end;
-
 procedure TForm1.ButGenerClick(Sender: TObject);
 
 var
   str: String;
+  capacitor, period, sample: String;
+  i: Integer;
 begin
 
-  if (freqState = 0) then
+  capacitor := Capacitors[ComboCapacitor.ItemIndex];
+  period := Periods[ComboPeriod.ItemIndex];
+  sample := Samples[ComboSample.ItemIndex];
+
+  // configuracion de la escala de tiempo
+  for i := 0 to 100 do
   begin
-    str := '2,0;';
-    ComPort.WriteStr(str);
-    Label1.Caption := str;
+    time[i] := StrToInt(sample) * i / 1000;
+  end;
+
+
+  // Envio de dato para configuracion de frecuencias
+
+  str := capacitor + ',' + period + ',' + sample + ';';
+  ComPort.WriteStr(str);
+
+  Chart1.Axes.Bottom.Maximum := time[100];
+
+  if capacitor = '1' then
+  begin
+    Series1.Color := RGB(0, 255, 0);
   end
-  else if (freqState = 1) then
+  else if capacitor = '2' then
   begin
-    str := '1,0;';
-    ComPort.WriteStr(str);
-    Label1.Caption := str;
+    Series1.Color := RGB(36, 201, 219);
+  end
+  else if capacitor = '3' then
+  begin
+    Series1.Color := RGB(240, 15, 32);
+  end;
+
+end;
+
+procedure TForm1.ButPauseClick(Sender: TObject);
+var
+  str: String;
+begin
+  str := '0,8000,50;';
+  ComPort.WriteStr(str);
+end;
+
+procedure TForm1.ButtonSaveClick(Sender: TObject);
+var
+  csvFile: TStringList;
+  saveDialog: TSaveDialog;
+begin
+  saveDialog := TSaveDialog.Create(nil);
+  try
+    // Configurar opciones del diálogo de guardado
+    saveDialog.FileName := 'Datos.csv';
+    saveDialog.Filter := 'Archivo CSV (*.csv)|*.csv';
+
+    // Desplegar ventana de diálogo y guardar archivo si el usuario hace clic en "Guardar"
+    if saveDialog.Execute then
+    begin
+      csvFile := TStringList.Create;
+      try
+        // Agregar cabecera de columnas al archivo CSV
+        csvFile.Add('Tiempos,Voltajes');
+
+        // Agregar contenido del TMemo al archivo CSV
+        csvFile.AddStrings(Memo1.Lines);
+
+        // Guardar archivo CSV
+        csvFile.SaveToFile(saveDialog.FileName);
+      finally
+        csvFile.Free;
+      end;
+
+      ShowMessage('Archivo CSV guardado exitosamente.');
+    end;
+  finally
+    saveDialog.Free;
   end;
 
 end;
 
 procedure TForm1.ComPortOpen(Sender: TObject);
+
 begin
   ButConecct.Caption := 'Desconectar';
 
-  ButFreq.Enabled := False;
-  EditFreq.Enabled := False;
   ButGener.Enabled := True;
+  ButtonSave.Enabled := True;
+  ButPause.Enabled := True;
+
+  ClearComPortInputBuffer(ComPort);
+
 end;
 
 procedure TForm1.ComPortClose(Sender: TObject);
@@ -146,85 +211,88 @@ begin
   if ButConecct <> nil then
     ButConecct.Caption := 'Conectar';
 
-  ButFreq.Enabled := False;
-  EditFreq.Enabled := False;
   ButGener.Enabled := False;
+  ButPause.Enabled := False;
+end;
+
+procedure TForm1.ClearComPortInputBuffer(Port: TComPort);
+var
+  Buffer: array [0 .. 255] of AnsiChar;
+  BytesRead: Integer;
+begin
+  // clear the input buffer
+  while Port.InputCount > 0 do
+  begin
+    BytesRead := Port.Read(Buffer, SizeOf(Buffer));
+  end;
 end;
 
 procedure TForm1.ComPortRxChar(Sender: TObject; Count: Integer);
 var
-  str, min, sec, compose: String;
-  List: TArray<String>;
-  command: Integer;
+  str, min, sec, compose, payload: String;
+  // List: TArray<String>;
+  ListDiv: Array [0 .. 1] of String;
+  command, i: Integer;
+  voltage: Double;
+
+  S, LeftPart, RightPart: string;
+  DelimPos: Integer;
 
 begin
 
   ComPort.ReadStr(str, Count);
 
   dataRead := dataRead + str;
-
-  if ContainsText(dataRead, ';') then
+  while ContainsText(dataRead, ',') do
   begin
-    List := dataRead.Split([',', ';'], 2);
 
-    if Length(List) = 2 then
+    DelimPos := Pos(',', dataRead); // busca la primera ocurrencia del token ' '
+    if DelimPos > 0 then
     begin
-      command := StrToInt(List[0]);
-      freqValue := StrToFloat(List[1]);
-
-      if (command = 3) then
-      begin
-        Label1.Caption := FloatToStr(freqValue);
-        compose := 'Frecuencia = ' + FloatToStr(freqValue) + ' Hz';
-
-        // escribir datos en el memo
-
-        Memo1.Text := Memo1.Text + compose + #$D#$A;
-        SendMessage(Memo1.Handle, WM_VSCROLL, SB_BOTTOM, 0);
-      end
-      else if (command = 2) then
-      begin
-        freqState := 1;
-        ButGener.Caption := 'Apagar generador';
-        EditFreq.Enabled := True;
-        ButFreq.Enabled := True;
-      end
-      else if (command = 1) then
-      begin
-        freqState := 0;
-        ButGener.Caption := 'Encender generador';
-        EditFreq.Enabled := False;
-        ButFreq.Enabled := False;
-      end
-      else if (command = 0) then
-      begin
-        freqState := 0;
-        compose := 'Sistema conectado';
-        ButGener.Caption := 'Encender generador';
-
-        // escribir datos en el memo
-
-        Memo1.Text := Memo1.Text + compose + #$D#$A#$D#$A;
-        SendMessage(Memo1.Handle, WM_VSCROLL, SB_BOTTOM, 0);
-      end;
+      ListDiv[0] := Copy(dataRead, 1, DelimPos - 1);
+      // divide la cadena en dos partes
+      ListDiv[1] := Copy(dataRead, DelimPos + 1, Length(dataRead) - DelimPos);
 
     end;
 
-    dataRead := '';
+    // List := dataRead.Split([',']);
+
+    try
+      if ListDiv[0] = '' then
+      begin
+        ListDiv[0] := '0';
+      end;
+
+      command := StrToInt(ListDiv[0]);
+
+      if command > 1024 then
+      begin
+        command := 1023;
+      end;
+
+      voltage := RoundTo(command * 5.0 / 1024, -2);
+
+      for i := 1 to 100 do
+      begin
+        value[i - 1] := value[i];
+      end;
+      value[100] := voltage;
+
+    finally
+    end;
+
+    dataRead := ListDiv[1];
 
   end;
 
-end;
+  payload := '';
+  for i := 0 to 100 do
+  begin
+    payload := payload + FloatToStr(time[i]) + ',' + FloatToStr(value[i]
+      ) + #$D#$A;
+  end;
 
-procedure TForm1.EditFreqKeyPress(Sender: TObject; var Key: Char);
-begin
-
-  if Ord(Key) = VK_RETURN then
-    ButFreqClick(ButFreq);
-
-  (* only return value if numeric *)
-  if not CharInSet(Key, ['0' .. '9', '.', #8]) then
-    Key := #0;
+  Memo1.Text := payload;
 
 end;
 
@@ -232,13 +300,31 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   i: Integer;
 begin
-  Series1.Clear;
 
-  for i := 0 to 100 do
-  begin
-    value[i] := Sin(time);
-    time := time + 0.1;
-  end;
+  // definicion de los capacitores
+  Capacitors[0] := '1';
+  Capacitors[1] := '2';
+  Capacitors[2] := '3';
+
+  // definicion de periodos
+  Periods[0] := '200';
+  Periods[1] := '500';
+  Periods[2] := '1000';
+  Periods[3] := '2000';
+  Periods[4] := '4000';
+  Periods[5] := '5000';
+  Periods[6] := '6000';
+  Periods[7] := '8000';
+
+  // definicion de muestreo
+  Samples[0] := '10';
+  Samples[1] := '20';
+  Samples[2] := '40';
+  Samples[3] := '50';
+  Samples[4] := '100';
+  Samples[5] := '200';
+
+  Series1.Clear;
 
   Series1.AddArray(value);
 
@@ -250,7 +336,7 @@ begin
   if ComPort.Connected then
   begin
     try
-      ComPort.WriteStr('1,0;');
+      ComPort.WriteStr('0,8000,20;');
       Sleep(50);
       ComPort.Close;
     finally
@@ -272,16 +358,7 @@ begin
 
   Series1.Clear;
 
-  for i := 0 to 99 do
-  begin
-    value[i] := value[i+1];
-
-  end;
-
-  time := time + 0.1;
-  value[100] := Sin(time);
-
-  Series1.AddArray(value);
+  Series1.AddArray(time, value);
 
 end;
 

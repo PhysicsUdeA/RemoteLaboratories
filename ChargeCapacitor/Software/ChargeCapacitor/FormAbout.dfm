@@ -43,18 +43,18 @@ object Frm_About: TFrm_About
     Caption = 'Jaime Alberto Osorio Velez'
   end
   object Label5: TLabel
-    Left = 256
-    Top = 304
+    Left = 253
+    Top = 317
     Width = 300
     Height = 13
     Caption = '__________________________________________________'
   end
   object Label6: TLabel
-    Left = 172
+    Left = 155
     Top = 16
-    Width = 266
+    Width = 306
     Height = 25
-    Caption = 'Sistema generador de ondas'
+    Caption = 'Sistema Descarga de capacitores'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -19
@@ -63,7 +63,7 @@ object Frm_About: TFrm_About
     ParentFont = False
   end
   object Image2: TImage
-    Left = 20
+    Left = 8
     Top = 47
     Width = 224
     Height = 284
@@ -1081,28 +1081,35 @@ object Frm_About: TFrm_About
   end
   object Label7: TLabel
     Left = 328
-    Top = 230
-    Width = 61
+    Top = 260
+    Width = 133
     Height = 13
-    Caption = 'Edwin Lopez'
+    Caption = 'Leonardo Pach'#243'n Contreras'
   end
   object Label8: TLabel
     Left = 328
-    Top = 249
-    Width = 68
+    Top = 279
+    Width = 93
     Height = 13
-    Caption = 'Victor Navarro'
+    Caption = 'Luis Felipe Ram'#237'rez'
   end
   object Label10: TLabel
     Left = 328
-    Top = 268
+    Top = 298
     Width = 66
     Height = 13
     Caption = 'Jhon Jaramillo'
   end
+  object Label11: TLabel
+    Left = 368
+    Top = 241
+    Width = 39
+    Height = 13
+    Caption = 'Apoyan:'
+  end
   object Button1: TButton
-    Left = 448
-    Top = 336
+    Left = 456
+    Top = 341
     Width = 81
     Height = 25
     Cursor = crHandPoint
@@ -1118,9 +1125,9 @@ object Frm_About: TFrm_About
     Height = 57
     AutoSize = False
     Caption = 
-      'Herramienta computacional para el manejo del sistema de generado' +
-      'r de ondas, utilizado en experimentos para generar ondas en una ' +
-      'cuerda u otros similares.'
+      'Herramienta computacional para el manejo del sistema de carga y ' +
+      'descarga de un capacitor, utilizado en experimentos y laboratori' +
+      'os remotos.'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -8

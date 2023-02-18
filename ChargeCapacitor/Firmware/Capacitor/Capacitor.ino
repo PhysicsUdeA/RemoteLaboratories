@@ -82,7 +82,7 @@ void setup()
     // Serial initialization
     Serial.begin(115200);
 
-    //  Serial.print("0,0;");
+    // Serial.print("0,0,0;");
 }
 
 /** ****************************************************************************
@@ -154,7 +154,8 @@ void loop()
         flagPrint = false;
         // print the ADC Value
         adcValue = analogRead(selectedADC);
-        Serial.println(adcValue);
+        Serial.print(adcValue);
+        Serial.print(',');
     }
 }
 
