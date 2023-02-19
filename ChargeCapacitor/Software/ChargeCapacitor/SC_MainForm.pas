@@ -34,6 +34,7 @@ type
     ButPause: TButton;
     GroupBox2: TGroupBox;
     Image1: TImage;
+    AssistantMode: TMenuItem;
     procedure ComPortOpen(Sender: TObject);
     procedure ComPortClose(Sender: TObject);
     procedure ComPortRxChar(Sender: TObject; Count: Integer);
@@ -47,6 +48,7 @@ type
     procedure ButtonSaveClick(Sender: TObject);
     procedure ButPauseClick(Sender: TObject);
     procedure ClearComPortInputBuffer(Port: TComPort);
+    procedure AssistantModeClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -59,7 +61,7 @@ var
   dataRead: String;
   freqState: Integer;
 
-  value, time: Array [0 .. 100] of Double;
+  value, time, noTime: Array [0 .. 100] of Double;
 
   Capacitors: Array [0 .. 2] of String;
   Periods: Array [0 .. 8] of String;
@@ -124,6 +126,7 @@ begin
   for i := 0 to 100 do
   begin
     time[i] := StrToInt(sample) * i / 1000;
+    noTime[i] := i;
   end;
 
 
@@ -132,7 +135,20 @@ begin
   str := capacitor + ',' + period + ',' + sample + ';';
   ComPort.WriteStr(str);
 
-  Chart1.Axes.Bottom.Maximum := time[100];
+  if AssistantMode.Checked = True then
+  begin
+    Chart1.Axes.Bottom.Maximum := time[100];
+    Chart1.Axes.Left.Maximum := 5.0;
+    Chart1.Axes.Left.Title.Caption := 'Voltaje (V)';
+    Chart1.Axes.Bottom.Title.Caption := 'Tiempo (s)';
+  end
+  else
+  begin
+    Chart1.Axes.Bottom.Maximum := noTime[100];
+    Chart1.Axes.Left.Maximum := 1050;
+    Chart1.Axes.Left.Title.Caption := 'Valor ADC';
+    Chart1.Axes.Bottom.Title.Caption := 'Muestras';
+  end;
 
   if capacitor = '1' then
   begin
@@ -174,7 +190,14 @@ begin
       csvFile := TStringList.Create;
       try
         // Agregar cabecera de columnas al archivo CSV
-        csvFile.Add('Tiempos,Voltajes');
+        if AssistantMode.Checked = True then
+        begin
+          csvFile.Add('Tiempos,Voltajes');
+        end
+        else
+        begin
+          csvFile.Add('Muestras,ADC_Val');
+        end;
 
         // Agregar contenido del TMemo al archivo CSV
         csvFile.AddStrings(Memo1.Lines);
@@ -270,7 +293,14 @@ begin
         command := 1023;
       end;
 
-      voltage := RoundTo(command * 5.0 / 1024, -2);
+      if AssistantMode.Checked = True then
+      begin
+        voltage := RoundTo(command * 5.0 / 1024, -2);
+      end
+      else
+      begin
+        voltage := command;
+      end;
 
       for i := 1 to 100 do
       begin
@@ -288,8 +318,17 @@ begin
   payload := '';
   for i := 0 to 100 do
   begin
-    payload := payload + FloatToStr(time[i]) + ',' + FloatToStr(value[i]
-      ) + #$D#$A;
+
+    if AssistantMode.Checked = True then
+    begin
+      payload := payload + FloatToStr(time[i]) + ',' + FloatToStr(value[i]
+        ) + #$D#$A;
+    end
+    else
+    begin
+      payload := payload + FloatToStr(noTime[i]) + ',' + FloatToStr(value[i]
+        ) + #$D#$A;
+    end;
   end;
 
   Memo1.Text := payload;
@@ -346,6 +385,27 @@ begin
   end;
 end;
 
+procedure TForm1.AssistantModeClick(Sender: TObject);
+begin
+  if AssistantMode.Checked = False then
+  begin
+    AssistantMode.Checked := True;
+    Chart1.Axes.Bottom.Maximum := time[100];
+    Chart1.Axes.Left.Maximum := 5.0;
+    Chart1.Axes.Left.Title.Caption := 'Voltaje (V)';
+    Chart1.Axes.Bottom.Title.Caption := 'Tiempo (s)';
+  end
+  else
+  begin
+    AssistantMode.Checked := False;
+    Chart1.Axes.Bottom.Maximum := noTime[100];
+    Chart1.Axes.Left.Maximum := 1050;
+    Chart1.Axes.Left.Title.Caption := 'Valor ADC';
+    Chart1.Axes.Bottom.Title.Caption := 'Muestras';
+  end;
+
+end;
+
 procedure TForm1.Serial1Click(Sender: TObject);
 begin
   ComPort.ShowSetupDialog;
@@ -358,7 +418,14 @@ begin
 
   Series1.Clear;
 
-  Series1.AddArray(time, value);
+  if AssistantMode.Checked = True then
+  begin
+    Series1.AddArray(time, value);
+  end
+  else
+  begin
+    Series1.AddArray(noTime, value);
+  end;
 
 end;
 
